@@ -435,7 +435,7 @@
 			<!-- Big number -->
 			<div class="font-mono text-3xl font-medium leading-none mb-1" style="color: {country.color}">{stats.past}</div>
 			<div class="text-[11px] text-stone-400 dark:text-zinc-600 mb-2 font-mono tabular-nums">
-				{stats.past} past · {stats.upcoming} upcoming
+				{stats.past} past · {stats.upcoming} upcoming · {stats.past + stats.upcoming} total
 			</div>
 			<!-- Progress bar -->
 			<div class="relative h-1.5 mb-1">
