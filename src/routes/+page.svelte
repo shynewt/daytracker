@@ -268,7 +268,11 @@
 	<!-- Year nav -->
 	<div class="flex items-center gap-0.5 ml-3">
 		<button onclick={prevYear} class={iconBtn} title="Previous year"><IconChevronLeft size={16} /></button>
-		<span class="font-mono text-sm font-medium w-12 text-center tabular-nums select-none">{selectedYear}</span>
+		<button
+			onclick={() => selectedYear = new Date().getFullYear()}
+			class="font-mono text-sm font-medium w-12 text-center tabular-nums select-none hover:text-amber-500 transition-colors cursor-pointer {selectedYear === new Date().getFullYear() ? '' : 'underline decoration-dotted underline-offset-4 decoration-stone-300 dark:decoration-zinc-600'}"
+			title="Jump to current year"
+		>{selectedYear}</button>
 		<button onclick={nextYear} class={iconBtn} title="Next year"><IconChevronRight size={16} /></button>
 	</div>
 
@@ -313,8 +317,8 @@
 		<div class="flex items-center gap-2.5 px-3 py-2.5 hover:bg-stone-50 dark:hover:bg-zinc-800/50 transition-colors group" style="border-left: 3px solid {country.color}">
 			<span class="flex-1 text-sm font-medium truncate">{country.name}</span>
 			<span class="font-mono text-[10px] bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded px-1.5 py-0.5 text-stone-500 dark:text-zinc-400 shrink-0">{code}</span>
-			<button onclick={() => startEdit(code)} class="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center text-stone-400 hover:text-blue-500 transition-all rounded"><IconPencil size={13} /></button>
-			<button onclick={() => deleteCountry(code)} class="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center text-stone-400 hover:text-red-500 transition-all rounded"><IconTrash size={13} /></button>
+			<button onclick={() => startEdit(code)} class="md:opacity-0 md:group-hover:opacity-100 w-6 h-6 flex items-center justify-center text-stone-400 hover:text-blue-500 transition-all rounded"><IconPencil size={13} /></button>
+			<button onclick={() => deleteCountry(code)} class="md:opacity-0 md:group-hover:opacity-100 w-6 h-6 flex items-center justify-center text-stone-400 hover:text-red-500 transition-all rounded"><IconTrash size={13} /></button>
 		</div>
 		<!-- Min / Max rules -->
 		<div class="flex items-center gap-2 px-4 pb-2.5 text-[11px] text-stone-400 dark:text-zinc-600" style="padding-left: 19px">
@@ -346,11 +350,18 @@
 </aside>
 
 <!-- ── CALENDAR ─────────────────────────────────────────────────── -->
-<main class="flex-1 overflow-y-auto select-none {activeMobileTab !== 'calendar' ? 'max-md:hidden' : ''}">
+<main class="flex-1 overflow-y-auto select-none relative {activeMobileTab !== 'calendar' ? 'max-md:hidden' : ''}">
+	{#if Object.keys(appState.countries).length === 0}
+	<div class="sticky top-0 z-10 flex items-center gap-2.5 px-4 py-3 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-900/40 text-[13px] text-amber-700 dark:text-amber-400">
+		<IconPlus size={14} class="shrink-0" />
+		<span>Add a country in the sidebar to start tracking days</span>
+		<button onclick={() => { addingCountry = true; activeMobileTab = 'countries'; }} class="md:hidden ml-auto px-2.5 py-1 rounded-lg bg-amber-500 text-white text-xs font-semibold">Add</button>
+	</div>
+	{/if}
 	{#if rangeAnchor}
-	<div class="sticky top-0 z-10 flex items-center justify-between gap-2 px-4 py-2 bg-blue-500 text-white text-[13px] font-medium">
-		<span>📅 <span class="font-mono">{rangeAnchor}</span> — now click an end date</span>
-		<button onclick={cancelRange} class="text-white/80 hover:text-white underline text-[12px]">Cancel (Esc)</button>
+	<div class="sticky top-0 z-10 flex items-center justify-between gap-2 px-4 py-2.5 bg-blue-500 text-white text-[13px] font-medium shadow-sm">
+		<span class="flex items-center gap-1.5"><IconCalendar size={14} /> <span class="font-mono">{rangeAnchor}</span> — click an end date</span>
+		<button onclick={cancelRange} class="px-2.5 py-0.5 rounded-lg bg-white/20 hover:bg-white/30 text-[12px] transition-colors">Cancel <span class="opacity-60 text-[11px]">Esc</span></button>
 	</div>
 	{/if}
 	<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 p-3">
@@ -365,7 +376,8 @@
 			<div class="grid grid-cols-7 gap-[3px]">
 				<!-- Day-of-week headers -->
 				{#each hdrs as h, hi}
-				<div class="text-center text-[9px] font-semibold tracking-wider pb-1 {hi >= (appState.settings.weekStartsMonday ? 5 : 0) && hi <= (appState.settings.weekStartsMonday ? 6 : 0) ? 'text-stone-300 dark:text-zinc-700' : 'text-stone-400 dark:text-zinc-600'}">{h}</div>
+				{@const isWeekend = appState.settings.weekStartsMonday ? hi >= 5 : hi === 0 || hi === 6}
+				<div class="text-center text-[9px] font-semibold tracking-wider pb-1 {isWeekend ? 'text-stone-300 dark:text-zinc-700' : 'text-stone-400 dark:text-zinc-600'}">{h}</div>
 				{/each}
 				<!-- Empty offset cells -->
 				{#each Array.from({length: fd}) as _}<div></div>{/each}
@@ -391,7 +403,7 @@
 					onmouseenter={() => { if (rangeAnchor) hoverDay = ds; }}
 					onmouseleave={() => { if (rangeAnchor) hoverDay = rangeAnchor; }}
 					onclick={() => onDayClick(ds)}
-					title={ds}
+					title={country ? `${ds} · ${country.name}` : ds}
 				>{day}</div>
 				{/each}
 			</div>
@@ -555,7 +567,7 @@
 
 		<!-- Actions -->
 		<div class="flex gap-2">
-			<button onclick={applyPopover} class="flex-1 bg-stone-900 dark:bg-zinc-100 hover:opacity-90 text-white dark:text-zinc-900 rounded-xl py-2.5 text-sm font-bold transition-opacity">Apply</button>
+			<button onclick={applyPopover} class="flex-1 rounded-xl py-2.5 text-sm font-bold transition-opacity hover:opacity-90 {popoverCountry === '__none__' ? 'bg-red-500 text-white' : 'bg-stone-900 dark:bg-zinc-100 text-white dark:text-zinc-900'}">{popoverCountry === '__none__' ? 'Clear entries' : 'Apply'}</button>
 			<button onclick={() => popoverOpen = false} class="px-5 py-2.5 text-sm font-medium rounded-xl border border-stone-200 dark:border-zinc-700 text-stone-600 dark:text-zinc-400 hover:bg-stone-50 dark:hover:bg-zinc-800 transition-colors">Cancel</button>
 		</div>
 	</div>
