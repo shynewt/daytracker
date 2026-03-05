@@ -1,5 +1,5 @@
 import type { AppState } from './types';
-import { getDatesInRange, getStats } from './utils';
+import { getDatesInRange, toDateStr, parseDate, getStats } from './utils';
 
 const STORAGE_KEY = 'daytracker_data';
 
@@ -26,11 +26,6 @@ function loadFromStorage(): AppState {
 	return defaultState();
 }
 
-function saveToStorage(state: AppState) {
-	if (typeof localStorage === 'undefined') return;
-	localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
 export const appState = $state<AppState>(defaultState());
 
 let initialized = false;
@@ -38,55 +33,39 @@ let initialized = false;
 export function initStore() {
 	if (initialized) return;
 	initialized = true;
-	const loaded = loadFromStorage();
-	Object.assign(appState, loaded);
+	Object.assign(appState, loadFromStorage());
 }
 
 $effect.root(() => {
 	$effect(() => {
-		// Serialize to trigger reactivity tracking on all nested keys
 		const snapshot = JSON.stringify(appState);
-		if (initialized) saveToStorage(JSON.parse(snapshot));
+		if (initialized && typeof localStorage !== 'undefined') {
+			localStorage.setItem(STORAGE_KEY, snapshot);
+		}
 	});
 });
 
-export function setEntry(date: string, country: string) {
-	appState.entries[date] = { country };
-}
-
 export function setEntryRange(from: string, to: string, country: string) {
-	const dates = getDatesInRange(from, to);
-	for (const date of dates) {
+	for (const date of getDatesInRange(from, to)) {
 		appState.entries[date] = { country };
 	}
 }
 
-export function removeEntry(date: string) {
-	delete appState.entries[date];
-}
-
 export function removeEntryRange(from: string, to: string) {
-	const dates = getDatesInRange(from, to);
-	for (const date of dates) {
+	for (const date of getDatesInRange(from, to)) {
 		delete appState.entries[date];
 	}
 }
 
-export function addCountry(code: string, name: string, color: string) {
-	appState.countries[code] = { name, color };
-}
-
-export function updateCountry(code: string, name: string, color: string) {
+export function setCountry(code: string, name: string, color: string) {
 	appState.countries[code] = { name, color };
 }
 
 export function removeCountry(code: string) {
 	delete appState.countries[code];
-	// Remove all entries for this country
 	for (const [date, entry] of Object.entries(appState.entries)) {
 		if (entry.country === code) delete appState.entries[date];
 	}
-	// Remove all rules for this country
 	for (const year of Object.keys(appState.rules)) {
 		delete appState.rules[year][code];
 	}
@@ -95,6 +74,12 @@ export function removeCountry(code: string) {
 export function setRule(year: string, countryCode: string, min: number, max: number) {
 	if (!appState.rules[year]) appState.rules[year] = {};
 	appState.rules[year][countryCode] = { min, max };
+}
+
+function nextDay(dateStr: string): string {
+	const d = parseDate(dateStr);
+	d.setDate(d.getDate() + 1);
+	return toDateStr(d);
 }
 
 function entriesToRanges(entries: AppState['entries']): Record<string, string[]> {
@@ -109,9 +94,7 @@ function entriesToRanges(entries: AppState['entries']): Record<string, string[]>
 		let start = dates[0], prev = dates[0];
 		for (let i = 1; i < dates.length; i++) {
 			const d = dates[i];
-			const next = new Date(prev);
-			next.setDate(next.getDate() + 1);
-			if (d === next.toISOString().slice(0, 10)) {
+			if (d === nextDay(prev)) {
 				prev = d;
 			} else {
 				ranges.push(start === prev ? start : `${start}/${prev}`);
@@ -159,8 +142,10 @@ export function importString(str: string): AppState {
 }
 
 export function replaceState(incoming: AppState) {
-	Object.assign(appState, incoming);
-	saveToStorage(appState);
+	appState.countries = incoming.countries;
+	appState.rules = incoming.rules;
+	appState.entries = incoming.entries;
+	appState.settings = incoming.settings;
 }
 
 export function mergeState(incoming: AppState) {
@@ -174,7 +159,6 @@ export function mergeState(incoming: AppState) {
 		}
 	}
 	Object.assign(appState.entries, incoming.entries);
-	saveToStorage(appState);
 }
 
 export function exportJSON() {
@@ -186,25 +170,6 @@ export function exportJSON() {
 	a.download = `daytracker-${new Date().toISOString().slice(0, 10)}.json`;
 	a.click();
 	URL.revokeObjectURL(url);
-}
-
-export function importJSON(file: File): Promise<void> {
-	return new Promise((resolve, reject) => {
-		const reader = new FileReader();
-		reader.onload = (e) => {
-			try {
-				const parsed = JSON.parse(e.target?.result as string);
-				if (parsed.version !== 1) throw new Error('Unsupported version');
-				Object.assign(appState, parsed);
-				saveToStorage(appState);
-				resolve();
-			} catch (err) {
-				reject(err);
-			}
-		};
-		reader.onerror = () => reject(reader.error);
-		reader.readAsText(file);
-	});
 }
 
 export { getStats };

@@ -3,8 +3,8 @@
 	import { fade, fly } from 'svelte/transition';
 	import {
 		appState, initStore, setEntryRange, removeEntryRange,
-		addCountry, updateCountry, removeCountry, setRule,
-		exportJSON, importJSON, exportString, importString, replaceState, mergeState, getStats
+		setCountry, removeCountry, setRule,
+		exportJSON, exportString, importString, replaceState, mergeState, getStats
 	} from '$lib/store.svelte';
 	import IconWorld        from '@tabler/icons-svelte/icons/world';
 	import IconChevronLeft  from '@tabler/icons-svelte/icons/chevron-left';
@@ -71,7 +71,6 @@
 
 	// Modals
 	let settingsOpen = $state(false);
-	let fileInput: HTMLInputElement;
 
 	// Share modal
 	let shareOpen     = $state(false);
@@ -164,12 +163,10 @@
 	function nextYear() { selectedYear++; }
 
 	// ── Helpers ───────────────────────────────────────────────────
+	const todayStr = toDateStr(new Date());
+
 	function pct(n: number): number {
 		return Math.min(100, n / daysInYear(selectedYear) * 100);
-	}
-
-	function isToday(d: string): boolean {
-		return d === toDateStr(new Date());
 	}
 
 	function totalTracked(): number {
@@ -212,7 +209,7 @@
 	function submitAddCountry() {
 		const code = newCode.trim().toUpperCase();
 		if (!code || !newName.trim()) return;
-		addCountry(code, newName.trim(), newColor);
+		setCountry(code, newName.trim(), newColor);
 		newCode = ''; newName = ''; newColor = '#6366f1'; addingCountry = false;
 	}
 
@@ -224,7 +221,7 @@
 
 	function submitEdit() {
 		if (!editingCountry) return;
-		updateCountry(editingCountry, editName, editColor);
+		setCountry(editingCountry, editName, editColor);
 		editingCountry = null;
 	}
 
@@ -238,14 +235,6 @@
 	function ruleMax(c: string)    { const v = appState.rules[String(selectedYear)]?.[c]?.max; return v ?? ''; }
 	function setMin(c: string, v: string) { setRule(String(selectedYear), c, parseInt(v)||0, appState.rules[String(selectedYear)]?.[c]?.max ?? 366); }
 	function setMax(c: string, v: string) { setRule(String(selectedYear), c, appState.rules[String(selectedYear)]?.[c]?.min ?? 0, parseInt(v)||366); }
-
-	// ── Import ────────────────────────────────────────────────────
-	function handleImport(e: Event) {
-		const f = (e.target as HTMLInputElement).files?.[0];
-		if (!f) return;
-		importJSON(f).then(() => { (e.target as HTMLInputElement).value = ''; })
-		             .catch(err => alert('Import failed: ' + err.message));
-	}
 
 	// ── Data clear ────────────────────────────────────────────────
 	function clearAll() {
@@ -387,8 +376,8 @@
 				{@const country  = entry ? appState.countries[entry.country] : null}
 				{@const inRange  = rangePreview.has(ds)}
 				{@const isAnchor = rangeAnchor === ds}
-				{@const today    = isToday(ds)}
-				{@const isPast   = ds <= toDateStr(new Date())}
+				{@const today    = ds === todayStr}
+				{@const isPast   = ds <= todayStr}
 				{@const bgColor  = country ? colorWithOpacity(country.color, isPast ? 0.65 : 0.12) : 'transparent'}
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div

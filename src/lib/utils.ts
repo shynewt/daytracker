@@ -87,8 +87,3 @@ export function getFirstDayOfMonth(year: number, month: number, weekStartsMonday
 	if (weekStartsMonday) return (day + 6) % 7;
 	return day;
 }
-
-export function formatDate(str: string): string {
-	const d = parseDate(str);
-	return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
-}
