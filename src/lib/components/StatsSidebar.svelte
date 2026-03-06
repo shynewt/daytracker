@@ -1,9 +1,6 @@
 <script lang="ts">
 	import { appState, getStats } from '$lib/store.svelte';
 	import IconChartBar      from '@tabler/icons-svelte/icons/chart-bar';
-	import IconAlertTriangle from '@tabler/icons-svelte/icons/alert-triangle';
-	import IconCheck         from '@tabler/icons-svelte/icons/check';
-	import IconCalendarEvent from '@tabler/icons-svelte/icons/calendar-event';
 	import { daysInYear, getCountryFlag } from '$lib/utils';
 
 	let {
@@ -65,43 +62,55 @@
 					{/if}
 				</div>
 
-				<div class="flex items-center gap-3 text-[10px] font-mono tabular-nums text-stone-400 dark:text-zinc-600">
-					<span>{stats.past} past</span>
-					{#if stats.upcoming > 0}<span>{stats.upcoming} upcoming</span>{/if}
-					<span class="ml-auto font-semibold text-stone-500 dark:text-zinc-500">{total}</span>
+				<div class="flex items-center gap-3 font-mono tabular-nums">
+					<span class="text-[13px] font-semibold text-stone-700 dark:text-zinc-200">{stats.past}<span class="text-[10px] font-normal text-stone-400 dark:text-zinc-500 ml-1">past</span></span>
+					{#if stats.upcoming > 0}<span class="text-[13px] font-semibold text-stone-700 dark:text-zinc-200">{stats.upcoming}<span class="text-[10px] font-normal text-stone-400 dark:text-zinc-500 ml-1">upcoming</span></span>{/if}
+					<span class="ml-auto text-[13px] font-semibold text-stone-500 dark:text-zinc-400">{total}</span>
 				</div>
 			</div>
 
-			{#if stats.overMax || stats.toMin > 0 || (min > 0 && stats.toMin === 0) || (max && max < 366 && !stats.overMax && stats.toMax > 0) || (stats.upcoming > 0 && ((stats.overMaxSim && !stats.overMax) || stats.toMin > 0))}
-			<div class="flex flex-col gap-1 px-3 py-2 border-t border-stone-100 dark:border-zinc-800/60 bg-stone-50/50 dark:bg-zinc-800/20">
-				{#if stats.overMax}
-				<div class="flex items-center gap-1.5 text-[11px] font-semibold text-red-500">
-					<span class="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>Over maximum
-				</div>
-				{:else if stats.toMin > 0}
-				<div class="flex items-center gap-1.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
-					<IconAlertTriangle size={11} class="shrink-0" />{stats.toMin}d to minimum
-				</div>
-				{:else if min > 0}
-				<div class="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-					<IconCheck size={11} class="shrink-0" />Min reached
-				</div>
-				{/if}
-				{#if max && max < 366 && !stats.overMax && stats.toMax > 0}
-				<div class="text-[10px] text-stone-400 dark:text-zinc-600 font-mono tabular-nums">{stats.toMax}d until max</div>
-				{/if}
-				{#if stats.upcoming > 0}
-					{#if stats.overMaxSim && !stats.overMax}
-					<div class="flex items-center gap-1.5 text-[10px] text-red-400/80 dark:text-red-500/70"><IconCalendarEvent size={10} class="shrink-0" />+upcoming exceeds max</div>
+			{#if min > 0 || (max && max < 366)}
+			{@const hasUpcoming = stats.upcoming > 0}
+			{@const cols = hasUpcoming ? 'grid-cols-[2rem_1fr_1fr]' : 'grid-cols-[2rem_1fr]'}
+			<div class="border-t border-stone-100 dark:border-zinc-800/60 bg-stone-50/50 dark:bg-zinc-800/20 overflow-hidden">
+				<div class="grid {cols} divide-x divide-stone-100 dark:divide-zinc-800/60">
+					<!-- Header -->
+					{#if hasUpcoming}
+					<div class="border-b border-stone-100 dark:border-zinc-800/60"></div>
+					<div class="border-b border-stone-100 dark:border-zinc-800/60 px-3 py-1 text-[8px] font-semibold uppercase tracking-widest text-stone-300 dark:text-zinc-700">now</div>
+					<div class="border-b border-stone-100 dark:border-zinc-800/60 px-3 py-1 text-[8px] font-semibold uppercase tracking-widest text-stone-400 dark:text-zinc-600">total</div>
 					{/if}
-					{#if stats.toMin > 0}
-						{#if stats.toMinSim === 0}
-						<div class="flex items-center gap-1.5 text-[10px] text-emerald-600/70 dark:text-emerald-400/60"><IconCalendarEvent size={10} class="shrink-0" />+upcoming reaches min</div>
-						{:else}
-						<div class="flex items-center gap-1.5 text-[10px] text-amber-500/70 dark:text-amber-400/60"><IconCalendarEvent size={10} class="shrink-0" />+upcoming: {stats.toMinSim} short</div>
-						{/if}
+					<!-- Min row -->
+					{#if min > 0}
+					{@const minOk = stats.past >= min}
+					{@const minOkSim = total >= min}
+					{@const hasBorder = max && max < 366}
+					<div class="px-2 py-2 font-mono text-[9px] uppercase tracking-wider text-stone-400 dark:text-zinc-600 flex items-center {hasBorder ? 'border-b border-stone-100 dark:border-zinc-800/60' : ''}">Min</div>
+					<div class="px-3 py-2 text-[12px] font-semibold {minOk ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'} {hasBorder ? 'border-b border-stone-100 dark:border-zinc-800/60' : ''}">
+						{minOk ? 'reached' : `${stats.toMin}d to go`}
+					</div>
+					{#if hasUpcoming}
+					<div class="px-3 py-2 text-[12px] font-semibold {minOkSim ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'} {hasBorder ? 'border-b border-stone-100 dark:border-zinc-800/60' : ''}">
+						{minOkSim ? 'reached' : `${stats.toMinSim}d to go`}
+					</div>
 					{/if}
-				{/if}
+					{/if}
+					<!-- Max row -->
+					{#if max && max < 366}
+					{@const maxOver = stats.past > max}
+					{@const maxOverSim = total > max}
+					<div class="px-2 py-2 font-mono text-[9px] uppercase tracking-wider text-stone-400 dark:text-zinc-600 flex items-center">Max</div>
+					<div class="px-3 py-2 text-[12px] font-semibold {maxOver ? 'text-red-500' : stats.toMax === 0 ? 'text-red-400 dark:text-red-500' : 'text-stone-600 dark:text-zinc-300'}">
+						{maxOver ? `${stats.past - max}d over` : stats.toMax === 0 ? 'at limit' : `${stats.toMax}d left`}
+					</div>
+					{#if hasUpcoming}
+					{@const totalOverBy = total - max}
+					<div class="px-3 py-2 text-[12px] font-semibold {maxOverSim ? 'text-red-500' : max - total === 0 ? 'text-red-400 dark:text-red-500' : 'text-stone-600 dark:text-zinc-300'}">
+						{maxOverSim ? `${totalOverBy}d over` : max - total === 0 ? 'at limit' : `${max - total}d left`}
+					</div>
+					{/if}
+					{/if}
+				</div>
 			</div>
 			{/if}
 		</div>

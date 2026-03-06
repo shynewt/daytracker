@@ -134,7 +134,7 @@
 				{@const isAnchor = rangeAnchor === ds}
 				{@const today    = ds === todayStr}
 				{@const isPast   = ds <= todayStr}
-				{@const bgColor  = country ? colorWithOpacity(country.color, isPast ? 0.65 : 0.12) : 'transparent'}
+				{@const bgColor  = country ? colorWithOpacity(country.color, isPast ? 0.65 : 0.18) : 'transparent'}
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div
 					class="aspect-square flex items-center justify-center font-mono rounded-md cursor-pointer relative
@@ -193,7 +193,7 @@
 				{@const isAnchor = rangeAnchor === ds}
 				{@const today    = ds === todayStr}
 				{@const isPast   = ds <= todayStr}
-				{@const bgColor  = country ? colorWithOpacity(country.color, isPast ? 0.65 : 0.12) : ''}
+				{@const bgColor  = country ? colorWithOpacity(country.color, isPast ? 0.65 : 0.18) : ''}
 				{@const colHover  = hoveredDayOfMonth === day}
 				{@const cellHover = hoveredMi === mi && hoveredDayOfMonth === day}
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
