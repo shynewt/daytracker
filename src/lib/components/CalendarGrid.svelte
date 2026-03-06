@@ -71,34 +71,47 @@
 		<button onclick={cancelRange} class="px-2.5 py-0.5 rounded-lg bg-white/20 hover:bg-white/30 text-[12px] transition-colors">Cancel <span class="opacity-60 text-[11px]">Esc</span></button>
 	</div>
 	{/if}
+	{#if Object.keys(appState.countries).length > 0}
+	<div class="sticky top-0 z-9 flex items-center gap-4 px-4 py-2 bg-white/90 dark:bg-zinc-900/90 backdrop-blur border-b border-stone-100 dark:border-zinc-800/60">
+		{#each Object.entries(appState.countries) as [code, country]}
+		<div class="flex items-center gap-1.5 min-w-0">
+			<span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:{country.color}"></span>
+			{#if getCountryFlag(code)}<span class="text-sm leading-none shrink-0">{getCountryFlag(code)}</span>{/if}
+			<span class="text-[12px] font-medium text-stone-600 dark:text-zinc-400 truncate">{country.name}</span>
+		</div>
+		{/each}
+	</div>
+	{/if}
 	<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 p-3">
 		{#each Array.from({length: 12}, (_, i) => i) as mi}
 		{@const dc   = getDaysInMonth(selectedYear, mi)}
 		{@const fd   = getFirstDayOfMonth(selectedYear, mi, appState.settings.weekStartsMonday)}
 		{@const hdrs = appState.settings.weekStartsMonday ? HDR_MON : HDR_SUN}
-		<div class="bg-white dark:bg-zinc-900 rounded-2xl border border-stone-200 dark:border-zinc-800 p-3">
-			<div class="text-[11px] font-semibold tracking-widest uppercase text-stone-400 dark:text-zinc-600 text-center mb-2 pb-2 border-b border-stone-100 dark:border-zinc-800">{MONTHS[mi]}</div>
+		<div class="bg-white dark:bg-zinc-900 rounded-2xl border border-stone-200 dark:border-zinc-800 p-3.5">
+			<div class="flex items-baseline justify-between mb-3 pb-2.5 border-b border-stone-100 dark:border-zinc-800">
+				<span class="font-brand text-[13px] font-bold tracking-wide text-stone-700 dark:text-zinc-200">{MONTHS[mi]}</span>
+				<span class="font-mono text-[10px] text-stone-300 dark:text-zinc-700 tabular-nums">{String(mi + 1).padStart(2, '0')}</span>
+			</div>
 			<div class="grid grid-cols-7 gap-[3px]">
 				{#each hdrs as h, hi}
 				{@const isWeekend = appState.settings.weekStartsMonday ? hi >= 5 : hi === 0 || hi === 6}
-				<div class="text-center text-[9px] font-semibold tracking-wider pb-1 {isWeekend ? 'text-stone-300 dark:text-zinc-700' : 'text-stone-400 dark:text-zinc-600'}">{h}</div>
+				<div class="text-center text-[9px] font-semibold tracking-wider pb-1.5 {isWeekend ? 'text-stone-300 dark:text-zinc-700' : 'text-stone-400 dark:text-zinc-600'}">{h}</div>
 				{/each}
 				{#each Array.from({length: fd}) as _}<div></div>{/each}
 				{#each Array.from({length: dc}, (_, d) => d + 1) as day}
 				{@const ds      = `${selectedYear}-${String(mi+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`}
-				{@const entry    = appState.entries[ds]}
-				{@const country  = entry ? appState.countries[entry.country] : null}
+				{@const entry   = appState.entries[ds]}
+				{@const country = entry ? appState.countries[entry.country] : null}
 				{@const inRange  = rangePreview.has(ds)}
 				{@const isAnchor = rangeAnchor === ds}
 				{@const today    = ds === todayStr}
 				{@const isPast   = ds <= todayStr}
 				{@const bgColor  = country ? colorWithOpacity(country.color, isPast ? 0.65 : 0.12) : 'transparent'}
-			{@const flag     = entry ? getCountryFlag(entry.country) : ''}
-				<!-- svelte-ignore a11y_no_static_element_interactions -->
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div
-					class="aspect-square flex flex-col items-center justify-center font-mono text-[11px] rounded-md cursor-pointer relative hover:z-10
-						{!inRange ? 'transition-transform hover:scale-110' : ''}
-						{today    ? 'ring-2 ring-amber-500 ring-offset-1 ring-offset-white dark:ring-offset-zinc-900 font-bold' : ''}
+					class="aspect-square flex items-center justify-center font-mono text-[11px] rounded-md cursor-pointer relative
+						{!inRange ? 'hover:ring-2 hover:ring-inset hover:ring-white/40 dark:hover:ring-white/20' : ''}
+						{today    ? 'ring-2 ring-amber-400 ring-offset-1 ring-offset-white dark:ring-offset-zinc-900 font-bold' : ''}
 						{isAnchor ? 'ring-2 ring-blue-500 ring-offset-1 ring-offset-white dark:ring-offset-zinc-900 scale-110 z-10' : ''}
 						{inRange && !isAnchor ? 'bg-blue-100 dark:bg-blue-950/60 rounded-none' : ''}
 						{entry && !isPast && !inRange ? 'border border-dashed border-stone-300 dark:border-zinc-600' : ''}"
@@ -107,7 +120,7 @@
 					onmouseleave={() => { if (rangeAnchor) hoverDay = rangeAnchor; }}
 					onclick={() => onDayClick(ds)}
 					title={country ? `${ds} · ${country.name}` : ds}
-				><span class="{flag ? 'leading-tight' : ''}">{day}</span>{#if flag}<span class="text-[9px] leading-none pointer-events-none">{flag}</span>{/if}</div>
+				>{day}</div>
 				{/each}
 			</div>
 		</div>

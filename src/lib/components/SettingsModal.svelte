@@ -34,12 +34,12 @@
 		class="relative bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-700 rounded-2xl shadow-2xl w-full max-w-sm p-5 z-10"
 	>
 		<div class="flex items-center gap-2 mb-5">
-			<IconSettings size={16} class="text-stone-500 dark:text-zinc-500" />
-			<span class="font-semibold text-base">Settings</span>
-			<button onclick={() => open = false} class="ml-auto w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:bg-stone-100 dark:hover:bg-zinc-800 transition-colors"><IconX size={15} /></button>
+			<IconSettings size={14} class="text-stone-400 dark:text-zinc-600" />
+			<span class="font-brand font-bold text-[13px] tracking-wide text-stone-700 dark:text-zinc-200">Settings</span>
+			<button onclick={() => open = false} class="ml-auto w-7 h-7 rounded-xl flex items-center justify-center text-stone-400 hover:bg-stone-100 dark:hover:bg-zinc-800 transition-colors"><IconX size={15} /></button>
 		</div>
 
-		<label class="flex items-center gap-3 mb-5 cursor-pointer group">
+		<label class="flex items-center gap-3 mb-5 cursor-pointer">
 			<div class="relative w-10 h-5 rounded-full transition-colors {appState.settings.weekStartsMonday ? 'bg-amber-500' : 'bg-stone-200 dark:bg-zinc-700'}">
 				<input type="checkbox" bind:checked={appState.settings.weekStartsMonday} class="sr-only" />
 				<div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform {appState.settings.weekStartsMonday ? 'translate-x-5' : ''}"></div>
@@ -54,13 +54,13 @@
 				bind:value={relayUrl}
 				oninput={() => setRelayUrl(relayUrl)}
 				placeholder="Default relay"
-				class="w-full bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs font-mono text-stone-700 dark:text-zinc-300 placeholder:text-stone-400 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 transition-colors"
+				class="w-full bg-stone-50 dark:bg-zinc-800/80 border border-stone-200 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-xs font-mono text-stone-700 dark:text-zinc-300 placeholder:text-stone-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-all"
 			/>
 			<span class="text-[10px] text-stone-400 dark:text-zinc-600">Leave empty for default. Used for device sync.</span>
 		</label>
 
 		<div class="border-t border-stone-100 dark:border-zinc-800 pt-4">
-			<button onclick={clearAll} class="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-red-500 border border-red-200 dark:border-red-900/40 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors">
+			<button onclick={clearAll} class="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-red-500 border border-red-200 dark:border-red-900/40 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/20 transition-all">
 				<IconTrash size={15} /> Clear all data
 			</button>
 		</div>

@@ -70,13 +70,13 @@
 	] as tab}
 	<button
 		onclick={() => activeMobileTab = tab.id as 'countries' | 'calendar' | 'stats'}
-		class="flex-1 flex flex-col items-center justify-center gap-1 text-[10px] font-semibold tracking-wider uppercase transition-colors
+		class="flex-1 flex flex-col items-center justify-center gap-1 transition-colors
 			{activeMobileTab === tab.id
 				? 'text-amber-500 dark:text-amber-400'
 				: 'text-stone-400 dark:text-zinc-600 hover:text-stone-600 dark:hover:text-zinc-400'}"
 	>
-		<tab.Icon size={20} />
-		{tab.label}
+		<tab.Icon size={19} />
+		<span class="font-brand text-[9px] font-bold tracking-widest uppercase">{tab.label}</span>
 	</button>
 	{/each}
 </nav>

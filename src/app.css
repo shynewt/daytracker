@@ -8,3 +8,11 @@
   --font-mono:  'DM Mono', monospace;
   --font-sans:  'Figtree', system-ui, sans-serif;
 }
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.85 0 0) transparent;
+}
+.dark * {
+  scrollbar-color: oklch(0.3 0 0) transparent;
+}
