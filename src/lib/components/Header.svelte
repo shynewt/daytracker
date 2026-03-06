@@ -5,6 +5,7 @@
 	import IconSun          from '@tabler/icons-svelte/icons/sun';
 	import IconMoon         from '@tabler/icons-svelte/icons/moon';
 	import IconShare        from '@tabler/icons-svelte/icons/share';
+	import IconDevices      from '@tabler/icons-svelte/icons/devices';
 	import IconSettings     from '@tabler/icons-svelte/icons/settings';
 	import { iconBtn } from '$lib/styles';
 
@@ -13,12 +14,14 @@
 		isDark,
 		onToggleTheme,
 		onOpenShare,
+		onOpenSync,
 		onOpenSettings,
 	}: {
 		selectedYear: number;
 		isDark: boolean;
 		onToggleTheme: () => void;
 		onOpenShare: () => void;
+		onOpenSync: () => void;
 		onOpenSettings: () => void;
 	} = $props();
 
@@ -47,6 +50,7 @@
 			{#if isDark}<IconSun size={17} />{:else}<IconMoon size={17} />{/if}
 		</button>
 		<button onclick={onOpenShare} class={iconBtn} title="Share / Import"><IconShare size={17} /></button>
+		<button onclick={onOpenSync} class={iconBtn} title="Sync devices"><IconDevices size={17} /></button>
 		<button onclick={onOpenSettings} class={iconBtn} title="Settings"><IconSettings size={17} /></button>
 	</div>
 </header>

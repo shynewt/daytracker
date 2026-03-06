@@ -11,6 +11,7 @@
 	import DayEditorModal  from '$lib/components/DayEditorModal.svelte';
 	import SettingsModal   from '$lib/components/SettingsModal.svelte';
 	import ShareModal      from '$lib/components/ShareModal.svelte';
+	import SyncModal       from '$lib/components/SyncModal.svelte';
 
 	let isDark          = $state(false);
 	let selectedYear    = $state(new Date().getFullYear());
@@ -21,6 +22,7 @@
 	let popoverTo   = $state('');
 	let settingsOpen = $state(false);
 	let shareOpen    = $state(false);
+	let syncOpen     = $state(false);
 	let shareInitialTab = $state<'export' | 'import'>('export');
 
 	let calendarGrid: CalendarGrid;
@@ -49,10 +51,10 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<svelte:window onkeydown={(e) => { if (e.key === 'Escape') { calendarGrid?.cancelRange(); popoverOpen = false; settingsOpen = false; shareOpen = false; } }} />
+<svelte:window onkeydown={(e) => { if (e.key === 'Escape') { calendarGrid?.cancelRange(); popoverOpen = false; settingsOpen = false; shareOpen = false; syncOpen = false; } }} />
 <div class="h-dvh overflow-hidden flex flex-col bg-stone-50 dark:bg-zinc-950 text-stone-900 dark:text-zinc-100">
 
-<Header bind:selectedYear {isDark} onToggleTheme={toggleTheme} onOpenShare={() => openShare()} onOpenSettings={() => settingsOpen = true} />
+<Header bind:selectedYear {isDark} onToggleTheme={toggleTheme} onOpenShare={() => openShare()} onOpenSync={() => syncOpen = true} onOpenSettings={() => settingsOpen = true} />
 
 <div class="flex flex-1 overflow-hidden">
 	<CountrySidebar {selectedYear} {activeMobileTab} />
@@ -82,5 +84,6 @@
 <DayEditorModal bind:open={popoverOpen} bind:from={popoverFrom} bind:to={popoverTo} />
 <SettingsModal bind:open={settingsOpen} />
 <ShareModal bind:open={shareOpen} initialTab={shareInitialTab} />
+<SyncModal bind:open={syncOpen} />
 
 </div>

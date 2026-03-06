@@ -1,11 +1,18 @@
 <script lang="ts">
 	import { fade, fly } from 'svelte/transition';
 	import { appState } from '$lib/store.svelte';
+	import { getStoredRelayUrl, setRelayUrl } from '$lib/sync';
 	import IconSettings from '@tabler/icons-svelte/icons/settings';
 	import IconTrash    from '@tabler/icons-svelte/icons/trash';
 	import IconX        from '@tabler/icons-svelte/icons/x';
 
 	let { open = $bindable() }: { open: boolean } = $props();
+
+	let relayUrl = $state('');
+
+	$effect(() => {
+		if (open) relayUrl = getStoredRelayUrl();
+	});
 
 	function clearAll() {
 		if (confirm('Clear ALL data? This cannot be undone.')) {
@@ -24,7 +31,7 @@
 	></div>
 	<div
 		transition:fly={{ y: 24, duration: 220, opacity: 0 }}
-		class="relative bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-700 rounded-2xl shadow-2xl w-full max-w-xs p-5 z-10"
+		class="relative bg-white dark:bg-zinc-900 border border-stone-200 dark:border-zinc-700 rounded-2xl shadow-2xl w-full max-w-sm p-5 z-10"
 	>
 		<div class="flex items-center gap-2 mb-5">
 			<IconSettings size={16} class="text-stone-500 dark:text-zinc-500" />
@@ -38,6 +45,18 @@
 				<div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform {appState.settings.weekStartsMonday ? 'translate-x-5' : ''}"></div>
 			</div>
 			<span class="text-sm font-medium">Week starts on Monday</span>
+		</label>
+
+		<label class="flex flex-col gap-1.5 mb-5">
+			<span class="text-sm font-medium">Sync relay URL</span>
+			<input
+				type="text"
+				bind:value={relayUrl}
+				oninput={() => setRelayUrl(relayUrl)}
+				placeholder="Default relay"
+				class="w-full bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs font-mono text-stone-700 dark:text-zinc-300 placeholder:text-stone-400 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 transition-colors"
+			/>
+			<span class="text-[10px] text-stone-400 dark:text-zinc-600">Leave empty for default. Used for device sync.</span>
 		</label>
 
 		<div class="border-t border-stone-100 dark:border-zinc-800 pt-4">
