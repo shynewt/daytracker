@@ -78,6 +78,14 @@ export function colorWithOpacity(hex: string, opacity: number): string {
 	return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
 }
 
+export function getCountryFlag(code: string): string {
+	if (code.length !== 2) return '';
+	const offset = 0x1F1E6 - 65;
+	return [...code.toUpperCase()]
+		.map(c => String.fromCodePoint(c.charCodeAt(0) + offset))
+		.join('');
+}
+
 export function getDaysInMonth(year: number, month: number): number {
 	return new Date(year, month + 1, 0).getDate();
 }

@@ -4,7 +4,7 @@
 	import IconCalendar from '@tabler/icons-svelte/icons/calendar';
 	import {
 		toDateStr, parseDate, getDaysInMonth,
-		getFirstDayOfMonth, colorWithOpacity
+		getFirstDayOfMonth, colorWithOpacity, getCountryFlag
 	} from '$lib/utils';
 
 	let {
@@ -93,9 +93,10 @@
 				{@const today    = ds === todayStr}
 				{@const isPast   = ds <= todayStr}
 				{@const bgColor  = country ? colorWithOpacity(country.color, isPast ? 0.65 : 0.12) : 'transparent'}
+			{@const flag     = entry ? getCountryFlag(entry.country) : ''}
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div
-					class="aspect-square flex items-center justify-center font-mono text-[11px] rounded-md cursor-pointer relative hover:z-10
+					class="aspect-square flex flex-col items-center justify-center font-mono text-[11px] rounded-md cursor-pointer relative hover:z-10
 						{!inRange ? 'transition-transform hover:scale-110' : ''}
 						{today    ? 'ring-2 ring-amber-500 ring-offset-1 ring-offset-white dark:ring-offset-zinc-900 font-bold' : ''}
 						{isAnchor ? 'ring-2 ring-blue-500 ring-offset-1 ring-offset-white dark:ring-offset-zinc-900 scale-110 z-10' : ''}
@@ -106,7 +107,7 @@
 					onmouseleave={() => { if (rangeAnchor) hoverDay = rangeAnchor; }}
 					onclick={() => onDayClick(ds)}
 					title={country ? `${ds} · ${country.name}` : ds}
-				>{day}</div>
+				><span class="{flag ? 'leading-tight' : ''}">{day}</span>{#if flag}<span class="text-[9px] leading-none pointer-events-none">{flag}</span>{/if}</div>
 				{/each}
 			</div>
 		</div>

@@ -4,7 +4,7 @@
 	import IconAlertTriangle from '@tabler/icons-svelte/icons/alert-triangle';
 	import IconCheck         from '@tabler/icons-svelte/icons/check';
 	import IconCalendarEvent from '@tabler/icons-svelte/icons/calendar-event';
-	import { daysInYear } from '$lib/utils';
+	import { daysInYear, getCountryFlag } from '$lib/utils';
 
 	let {
 		selectedYear,
@@ -42,7 +42,8 @@
 			<div class="flex items-center gap-2.5 px-3 pt-2.5 pb-2" style="border-left: 3px solid {country.color}">
 				<div class="flex-1 min-w-0">
 					<div class="flex items-baseline gap-1.5">
-						<span class="text-[13px] font-semibold truncate">{country.name}</span>
+						{#if getCountryFlag(code)}<span class="text-base leading-none shrink-0">{getCountryFlag(code)}</span>{/if}
+					<span class="text-[13px] font-semibold truncate">{country.name}</span>
 						<span class="font-mono text-[10px] text-stone-400 dark:text-zinc-600 shrink-0">{code}</span>
 					</div>
 				</div>

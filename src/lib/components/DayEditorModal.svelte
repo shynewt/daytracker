@@ -4,6 +4,7 @@
 	import IconCalendar from '@tabler/icons-svelte/icons/calendar';
 	import IconX        from '@tabler/icons-svelte/icons/x';
 	import { inp } from '$lib/styles';
+	import { getCountryFlag } from '$lib/utils';
 
 	let {
 		open = $bindable(),
@@ -74,7 +75,7 @@
 				onclick={() => popoverCountry = code}
 				class="px-3 py-1.5 rounded-full text-xs font-semibold font-mono border-2 transition-all"
 				style="border-color: {country.color}; background: {popoverCountry === code ? country.color : 'transparent'}; color: {popoverCountry === code ? 'white' : country.color}"
-			>{code}</button>
+			>{getCountryFlag(code) || code}</button>
 			{/each}
 		</div>
 
