@@ -1,6 +1,6 @@
 import { exportString, importString, mergeState } from './store.svelte';
 
-const DEFAULT_RELAY = 'wss://day-counter-relay.YOUR_SUBDOMAIN.workers.dev';
+const DEFAULT_RELAY = import.meta.env.VITE_RELAY_URL ?? 'wss://day-counter-relay.YOUR_SUBDOMAIN.workers.dev';
 
 function generateId(len = 6): string {
 	const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
