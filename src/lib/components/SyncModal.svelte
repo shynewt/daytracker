@@ -2,7 +2,7 @@
 	import { fade, fly } from 'svelte/transition';
 	import { onDestroy } from 'svelte';
 	import QRCode from 'qrcode';
-	import { Html5Qrcode } from 'html5-qrcode';
+	import QrScanner from 'qr-scanner';
 	import IconRefresh from '@tabler/icons-svelte/icons/refresh';
 	import IconCheck from '@tabler/icons-svelte/icons/check';
 	import IconX from '@tabler/icons-svelte/icons/x';
@@ -18,14 +18,14 @@
 
 	let mode = $state<'host' | 'join'>('host');
 	let qrCanvas = $state<HTMLCanvasElement>();
-	let scannerEl = $state<HTMLDivElement>();
+	let videoEl = $state<HTMLVideoElement>();
 	let manualCode = $state('');
 
 	let hostSession = $state<SyncSession | null>(null);
 	let joinStatus = $state<SyncStatus>('idle');
 	let joinError = $state('');
 
-	let scanner: Html5Qrcode | null = null;
+	let scanner: QrScanner | null = null;
 	let destroyJoin: (() => void) | null = null;
 
 	$effect(() => {
@@ -47,7 +47,7 @@
 	});
 
 	$effect(() => {
-		if (open && mode === 'join' && scannerEl && joinStatus === 'idle') {
+		if (open && mode === 'join' && videoEl && joinStatus === 'idle') {
 			startScanner();
 		}
 	});
@@ -55,8 +55,9 @@
 	$effect(() => {
 		if (hostSession?.qrData && qrCanvas) {
 			QRCode.toCanvas(qrCanvas, hostSession.qrData, {
-				width: 200,
+				width: 260,
 				margin: 2,
+				errorCorrectionLevel: 'L',
 				color: { dark: '#1c1917', light: '#ffffff' },
 			});
 		}
@@ -83,30 +84,31 @@
 	}
 
 	async function startScanner() {
-		if (scanner) return;
+		if (scanner || !videoEl) return;
 		try {
-			scanner = new Html5Qrcode('qr-scanner');
-			await scanner.start(
-				{ facingMode: 'environment' },
-				{ fps: 10, qrbox: { width: 220, height: 220 } },
-				(text) => {
+			scanner = new QrScanner(
+				videoEl,
+				(result) => {
 					stopScanner();
-					handleJoin(text);
+					handleJoin(result.data);
 				},
-				() => {}
+				{
+					maxScansPerSecond: 25,
+					highlightScanRegion: true,
+					highlightCodeOutline: true,
+					returnDetailedScanResult: true,
+					onDecodeError: () => {},
+				}
 			);
+			await scanner.start();
 		} catch {
 			// Camera not available — user can use manual input
 		}
 	}
 
-	async function stopScanner() {
+	function stopScanner() {
 		if (scanner) {
-			try {
-				await scanner.stop();
-			} catch {
-				// ignore
-			}
+			scanner.destroy();
 			scanner = null;
 		}
 	}
@@ -176,7 +178,7 @@
 		</div>
 
 		<p class="text-xs text-stone-400 dark:text-zinc-500 mb-4 leading-relaxed">
-			Both devices exchange their data and <span class="font-semibold text-stone-600 dark:text-zinc-300">merge</span> it — nothing is deleted or overwritten. Entries from both sides are combined.
+			Both devices exchange their data and <span class="font-semibold text-stone-600 dark:text-zinc-300">merge</span> it. Nothing is deleted or overwritten. Entries from both sides are combined.
 		</p>
 
 		{#if mode === 'host'}
@@ -204,7 +206,7 @@
 					<span class="text-stone-500 dark:text-zinc-400">Merging data...</span>
 				{:else if hostSession.status === 'done'}
 					<IconCheck size={14} class="text-green-500" />
-					<span class="text-green-600 dark:text-green-400">Merged — both devices are in sync</span>
+					<span class="text-green-600 dark:text-green-400">Merged. Both devices are in sync</span>
 				{:else if hostSession.status === 'error'}
 					<span class="text-red-500">{hostSession.error || 'Unknown error'}</span>
 				{/if}
@@ -215,11 +217,12 @@
 		{:else}
 		<div class="flex flex-col gap-3">
 			{#if joinStatus === 'idle'}
-			<div
-				bind:this={scannerEl}
-				id="qr-scanner"
-				class="w-full aspect-square rounded-xl overflow-hidden bg-stone-100 dark:bg-zinc-800"
-			></div>
+			<video
+				bind:this={videoEl}
+				muted
+				playsinline
+				class="w-full aspect-square rounded-xl bg-stone-900 object-cover"
+			></video>
 
 			<div class="flex flex-col gap-1.5">
 				<span class="text-[10px] font-semibold uppercase tracking-wider text-stone-400 dark:text-zinc-600">
@@ -246,7 +249,7 @@
 					<span class="text-sm text-stone-500 dark:text-zinc-400">{statusLabel[joinStatus]}</span>
 				{:else if joinStatus === 'done'}
 					<IconCheck size={24} class="text-green-500" />
-					<span class="text-sm text-green-600 dark:text-green-400">Merged — both devices are in sync</span>
+					<span class="text-sm text-green-600 dark:text-green-400">Merged. Both devices are in sync</span>
 				{:else if joinStatus === 'error'}
 					<span class="text-sm text-red-500 text-center">{joinError || 'Unknown error'}</span>
 					<button

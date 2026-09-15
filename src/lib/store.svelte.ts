@@ -1,5 +1,5 @@
 import type { AppState } from './types';
-import { getDatesInRange, toDateStr, parseDate, getStats } from './utils';
+import { getDatesInRange, toDateStr, parseDate, todayStr, getStats } from './utils';
 
 const STORAGE_KEY = 'daytracker_data';
 
@@ -9,6 +9,7 @@ function defaultState(): AppState {
 		countries: {},
 		rules: {},
 		entries: {},
+		presence: null,
 		settings: { weekStartsMonday: true }
 	};
 }
@@ -19,7 +20,9 @@ function loadFromStorage(): AppState {
 		const raw = localStorage.getItem(STORAGE_KEY);
 		if (!raw) return defaultState();
 		const parsed = JSON.parse(raw);
-		if (parsed.version === 1) return parsed as AppState;
+		if (parsed.version === 1) {
+			return { ...defaultState(), ...parsed } as AppState;
+		}
 	} catch {
 		// ignore
 	}
@@ -34,6 +37,7 @@ export function initStore() {
 	if (initialized) return;
 	initialized = true;
 	Object.assign(appState, loadFromStorage());
+	catchUpPresence();
 }
 
 $effect.root(() => {
@@ -57,8 +61,8 @@ export function removeEntryRange(from: string, to: string) {
 	}
 }
 
-export function setCountry(code: string, name: string, color: string) {
-	appState.countries[code] = { name, color };
+export function setCountry(code: string, name: string, color: string, emoji?: string) {
+	appState.countries[code] = emoji ? { name, color, emoji } : { name, color };
 }
 
 export function removeCountry(code: string) {
@@ -69,12 +73,56 @@ export function removeCountry(code: string) {
 	for (const year of Object.keys(appState.rules)) {
 		delete appState.rules[year][code];
 	}
+	if (appState.presence?.country === code) appState.presence = null;
 }
 
-export function setRule(year: string, countryCode: string, min: number, max: number) {
+/**
+ * Set a rule field. Sentinels: min/target 0 = unset, max >= 366 = unset.
+ * Passing an unset value for all three removes the rule.
+ */
+export function setRule(year: string, countryCode: string, rule: { min?: number; target?: number; max?: number }) {
 	if (!appState.rules[year]) appState.rules[year] = {};
-	appState.rules[year][countryCode] = { min, max };
+	const cur = appState.rules[year][countryCode] ?? { min: 0, max: 366 };
+	const next = {
+		min: rule.min ?? cur.min ?? 0,
+		target: rule.target ?? cur.target ?? 0,
+		max: rule.max ?? cur.max ?? 366
+	};
+	if (next.min <= 0 && next.target <= 0 && next.max >= 366) {
+		delete appState.rules[year][countryCode];
+	} else {
+		appState.rules[year][countryCode] = next;
+	}
 }
+
+// ── Presence ("where I am now") ─────────────────────────────────────────────
+
+/**
+ * Fill gaps from presence.since to today with the presence country.
+ * Existing entries (recorded trips, plans) always win.
+ */
+function catchUpPresence() {
+	const p = appState.presence;
+	if (!p || !appState.countries[p.country]) return;
+	const today = todayStr();
+	if (p.since > today) return;
+	for (const d of getDatesInRange(p.since, today)) {
+		if (!appState.entries[d]) appState.entries[d] = { country: p.country };
+	}
+	if (p.since < today) appState.presence = { ...p, since: today };
+}
+
+/**
+ * Change the current location. Gaps since the previous presence are filled
+ * with the old country; the new presence starts today.
+ */
+export function setPresence(country: string | null) {
+	catchUpPresence();
+	appState.presence = country ? { country, since: todayStr() } : null;
+	if (country) appState.entries[todayStr()] = { country };
+}
+
+// ── Import / Export ─────────────────────────────────────────────────────────
 
 function nextDay(dateStr: string): string {
 	const d = parseDate(dateStr);
@@ -124,6 +172,7 @@ export function exportString(): string {
 		countries: appState.countries,
 		rules: appState.rules,
 		entries: entriesToRanges(appState.entries),
+		presence: appState.presence ?? null,
 		settings: appState.settings
 	};
 	return btoa(JSON.stringify(compact));
@@ -137,6 +186,7 @@ export function importString(str: string): AppState {
 		countries: parsed.countries,
 		rules: parsed.rules,
 		entries: rangesToEntries(parsed.entries),
+		presence: parsed.presence ?? null,
 		settings: parsed.settings
 	};
 }
@@ -145,6 +195,7 @@ export function replaceState(incoming: AppState) {
 	appState.countries = incoming.countries;
 	appState.rules = incoming.rules;
 	appState.entries = incoming.entries;
+	appState.presence = incoming.presence ?? null;
 	appState.settings = incoming.settings;
 }
 
@@ -154,11 +205,15 @@ export function mergeState(incoming: AppState) {
 	}
 	for (const [year, rules] of Object.entries(incoming.rules)) {
 		if (!appState.rules[year]) appState.rules[year] = {};
-		for (const [code, rule] of Object.entries(rules as Record<string, {min:number;max:number}>)) {
+		for (const [code, rule] of Object.entries(rules as Record<string, { min: number; target?: number; max: number }>)) {
 			if (!appState.rules[year][code]) appState.rules[year][code] = rule;
 		}
 	}
 	Object.assign(appState.entries, incoming.entries);
+	// Keep the most recent presence
+	if (incoming.presence && (!appState.presence || incoming.presence.since >= appState.presence.since)) {
+		appState.presence = incoming.presence;
+	}
 }
 
 export function exportJSON() {

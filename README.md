@@ -8,14 +8,16 @@ All data is stored locally in your browser: no account, no server, no tracking.
 
 - **Calendar view**: click or drag to select date ranges, assign them to a country
 - **Color-coded days**: each country gets a custom color shown on the calendar
-- **Min/max rules**: set day targets or limits per country per year
-- **Stats sidebar**: see past and upcoming day counts, progress bars, and warnings when you're over or under your targets
+- **Where I am now**: set your current country once; days auto-fill from that point until you change it. No daily check-in needed
+- **Min/goal/max rules**: per country per year. A required minimum (e.g. 60 days for tax residency), a goal you want to reach (e.g. 184 for extra safety), and a hard max you must not exceed (e.g. 183 days)
+- **Budget sidebar**: days to goal, days left to limit, the date a limit will be hit, and warnings when plans push you over
+- **Planning hints**: the day editor shows the projected impact of a range (before → after, over-limit warnings, overwrites) before you apply it
+- **Travel record**: trips are derived automatically from contiguous stays. Expand any country to see when you were there and for how long
 - **Simulated projections**: stats include upcoming (future) entries so you can plan ahead
 - **Import / Export**: copy an encoded string or download a JSON file to back up or transfer your data
 - **Device sync**: sync data between devices via QR code with end-to-end encrypted transport (relay stores nothing)
 - **Dark mode**: toggle between light and dark themes
 - **Configurable week start**: Monday or Sunday
-
 ## Getting Started
 
 ### Requirements
@@ -53,21 +55,30 @@ Add countries in the left sidebar. Each country gets:
 - A display name
 - A color for the calendar
 
-You can set **min/max day rules** per country per year. These appear as markers on the progress bar in the stats panel and trigger warnings when you're close to a limit or falling short of a target.
+You can set **min/goal/max day rules** per country per year:
+- **Min**: days you must spend there (e.g. 60 for tax residency)
+- **Goal**: days you want to reach (e.g. 184 for extra safety)
+- **Max**: days you must not exceed (e.g. 183 before becoming tax resident)
 
+Each appears as a marker on the progress bar in the budget panel, with live "days to go / days left" lines that account for planned future days.
+
+### Where I am now
+
+Set your current country in the header (the flag chip). The app fills every day from that point to today with that country automatically. You only open the app when something changes. Recorded trips and plans always take precedence over the auto-fill.
 ### Calendar
 
 Click a day to start a selection, then click another day to select a range. A modal appears to assign the range to a country (or clear it).
 
-### Stats
+### Budget
 
-The right sidebar shows for each country:
-- **Past**: days up to today
-- **Upcoming**: future days already planned
-- **Total**: past + upcoming
-- Warnings if you're over the maximum, approaching the maximum, or below the minimum
+The right sidebar shows, for each country:
+- **Total days**: past + planned, with the split shown below
+- **Max**: days to the limit, plus the date you'll hit it at the current plan; red when over
+- **Goal**: days to goal, or "Goal reached. Free to roam." (only actual past days count; plans show as "covered by plans")
+- **Min**: days still required
+- **Trips**: expandable travel record with every contiguous stay, its dates and duration
 
-The bottom of the stats panel shows the total tracked days out of 365/366 for the year.
+The bottom of the panel shows total tracked days out of 365/366, plus how many past days are still unaccounted for.
 
 ### Import / Export
 
@@ -209,8 +220,9 @@ The export string is a base64-encoded compact JSON object (version 2 format, wit
 
 ```
 countries: { [code]: { name, color } }
-rules:     { [year]: { [code]: { min, max } } }
+rules:     { [year]: { [code]: { min, target?, max } } }  // 0/366 = unset
 entries:   { [YYYY-MM-DD]: { country: code } }
+presence:  { country: code, since: YYYY-MM-DD } | null   // "where I am now"
 settings:  { weekStartsMonday: boolean }
 ```
 

@@ -4,7 +4,7 @@
 	import IconCalendar from '@tabler/icons-svelte/icons/calendar';
 	import {
 		toDateStr, parseDate, getDaysInMonth,
-		getFirstDayOfMonth, colorWithOpacity, getCountryFlag
+		getFirstDayOfMonth, colorWithOpacity, getCountryEmoji
 	} from '$lib/utils';
 
 
@@ -75,7 +75,7 @@
 	{/if}
 	{#if rangeAnchor}
 	<div class="sticky top-0 z-10 flex items-center justify-between gap-2 px-4 py-2.5 bg-blue-500 text-white text-[13px] font-medium shadow-sm">
-		<span class="flex items-center gap-1.5"><IconCalendar size={14} /> <span class="font-mono">{rangeAnchor}</span> — click an end date</span>
+		<span class="flex items-center gap-1.5"><IconCalendar size={14} /> <span class="font-mono">{rangeAnchor}</span> · click an end date</span>
 		<button onclick={cancelRange} class="px-2.5 py-0.5 rounded-lg bg-white/20 hover:bg-white/30 text-[12px] transition-colors">Cancel <span class="opacity-60 text-[11px]">Esc</span></button>
 	</div>
 	{/if}
@@ -87,7 +87,7 @@
 			{#each Object.entries(appState.countries) as [code, country]}
 			<div class="flex items-center gap-1.5 shrink-0">
 				<span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:{country.color}"></span>
-				{#if getCountryFlag(code)}<span class="text-sm leading-none">{getCountryFlag(code)}</span>{/if}
+				{#if getCountryEmoji(code, country)}<span class="text-sm leading-none">{getCountryEmoji(code, country)}</span>{/if}
 				<span class="text-[12px] font-medium text-stone-600 dark:text-zinc-400 hidden sm:block">{country.name}</span>
 			</div>
 			{/each}

@@ -22,3 +22,14 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Compact number inputs: hide spinners */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
