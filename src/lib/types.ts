@@ -6,11 +6,11 @@ export interface Country {
 }
 
 export interface Rule {
-	/** required minimum (e.g. 60 days for tax residency). 0 = unset */
+	// 0 = unset
 	min: number;
-	/** desired goal (e.g. 184 days for extra safety). 0/absent = unset */
+	// 0 or absent = unset
 	target?: number;
-	/** hard limit (e.g. 183 days before becoming tax resident). >=366 = unset */
+	// >=366 = unset
 	max: number;
 }
 

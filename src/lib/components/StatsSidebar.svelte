@@ -34,7 +34,6 @@
 		return getDatesInRange(`${yearStr}-01-01`, end).filter(d => !set.has(d)).length;
 	});
 
-	// ── One clear status per country: the binding constraint, in plain words ──
 	type Status = {
 		tone: 'red' | 'amber' | 'emerald' | 'neutral';
 		icon: 'warn' | 'max' | 'min' | 'goal' | 'check';
@@ -66,7 +65,7 @@
 		return null;
 	}
 
-	// Bar scale: the budget itself (max > goal > min > whole year)
+	// bar scale: the budget itself (max > goal > min > whole year)
 	function scale(s: CountryStats): number {
 		return s.max > 0 ? s.max : s.target > 0 ? s.target : s.min > 0 ? s.min : daysInYear(selectedYear);
 	}
@@ -119,7 +118,7 @@
 				<span class="font-mono text-2xl font-semibold tabular-nums leading-none shrink-0" style="color: {country.color}">{stats.total}<span class="text-[10px] font-normal text-stone-300 dark:text-zinc-600">d</span></span>
 			</div>
 
-			<!-- Bar scaled to the budget (only when the country has rules) -->
+			<!-- bar scaled to the budget (only when the country has rules) -->
 			{#if stats.min > 0 || stats.target > 0 || stats.max > 0}
 			<div class="px-3 pb-2">
 				<div class="relative h-1.5">

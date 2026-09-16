@@ -102,7 +102,7 @@
 			);
 			await scanner.start();
 		} catch {
-			// Camera not available — user can use manual input
+			// camera unavailable; user can use manual input
 		}
 	}
 

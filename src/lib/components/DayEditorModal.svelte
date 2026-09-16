@@ -28,7 +28,7 @@
 
 	// ── Planning impact preview ───────────────────────────────────────────
 	const impact = $derived.by(() => {
-		// note: intentionally not gated on `open` — must stay stable during the close transition
+		// intentionally not gated on `open`: must stay stable during the close transition
 		if (!from || !to || from > to) return null;
 		const dates = getDatesInRange(from, to);
 
