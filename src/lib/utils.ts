@@ -1,5 +1,23 @@
 import type { AppState, CountryStats, Rule, Trip } from './types';
 
+// btoa only accepts Latin1, and state JSON may contain emoji.
+export function bytesToBinary(bytes: Uint8Array): string {
+	let bin = '';
+	const chunk = 0x8000; // spread has an argument-count limit; chunk it
+	for (let i = 0; i < bytes.length; i += chunk) {
+		bin += String.fromCharCode(...bytes.subarray(i, i + chunk));
+	}
+	return bin;
+}
+
+export function encodeB64(str: string): string {
+	return btoa(bytesToBinary(new TextEncoder().encode(str)));
+}
+
+export function decodeB64(b64: string): string {
+	return new TextDecoder().decode(Uint8Array.from(atob(b64), c => c.charCodeAt(0)));
+}
+
 export function toDateStr(date: Date): string {
 	const y = date.getFullYear();
 	const m = String(date.getMonth() + 1).padStart(2, '0');

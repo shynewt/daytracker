@@ -1,5 +1,5 @@
 import type { AppState } from './types';
-import { getDatesInRange, toDateStr, parseDate, todayStr, getStats } from './utils';
+import { getDatesInRange, toDateStr, parseDate, todayStr, getStats, encodeB64, decodeB64 } from './utils';
 
 const STORAGE_KEY = 'daytracker_data';
 
@@ -97,10 +97,7 @@ export function setRule(year: string, countryCode: string, rule: { min?: number;
 
 // ── Presence ("where I am now") ─────────────────────────────────────────────
 
-/**
- * Fill gaps from presence.since to today with the presence country.
- * Existing entries (recorded trips, plans) always win.
- */
+// fills gaps from presence.since to today; existing entries always win
 function catchUpPresence() {
 	const p = appState.presence;
 	if (!p || !appState.countries[p.country]) return;
@@ -175,11 +172,11 @@ export function exportString(): string {
 		presence: appState.presence ?? null,
 		settings: appState.settings
 	};
-	return btoa(JSON.stringify(compact));
+	return encodeB64(JSON.stringify(compact));
 }
 
 export function importString(str: string): AppState {
-	const parsed = JSON.parse(atob(str.trim()));
+	const parsed = JSON.parse(decodeB64(str.trim()));
 	if (parsed.version !== 2) throw new Error('Unsupported version');
 	return {
 		version: 1,

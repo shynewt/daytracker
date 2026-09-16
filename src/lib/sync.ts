@@ -1,4 +1,5 @@
 import { exportString, importString, mergeState } from './store.svelte';
+import { bytesToBinary } from './utils';
 
 const DEFAULT_RELAY = import.meta.env.VITE_RELAY_URL ?? 'wss://day-counter-relay.YOUR_SUBDOMAIN.workers.dev';
 
@@ -17,7 +18,7 @@ async function generateKey(): Promise<CryptoKey> {
 
 async function exportKey(key: CryptoKey): Promise<string> {
 	const raw = await crypto.subtle.exportKey('raw', key);
-	return btoa(String.fromCharCode(...new Uint8Array(raw)));
+	return btoa(bytesToBinary(new Uint8Array(raw)));
 }
 
 async function importKey(encoded: string): Promise<CryptoKey> {
@@ -35,7 +36,7 @@ async function encrypt(data: string, key: CryptoKey): Promise<string> {
 	const combined = new Uint8Array(iv.length + new Uint8Array(enc).length);
 	combined.set(iv);
 	combined.set(new Uint8Array(enc), iv.length);
-	return btoa(String.fromCharCode(...combined));
+	return btoa(bytesToBinary(combined));
 }
 
 async function decrypt(payload: string, key: CryptoKey): Promise<string> {
