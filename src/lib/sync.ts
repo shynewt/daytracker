@@ -86,15 +86,16 @@ export async function createSyncSession(
 	const key = await generateKey();
 	const keyStr = await exportKey(key);
 
+	const relay = getRelayUrl();
 	const session: SyncSession = {
 		status: 'waiting',
 		error: '',
 		roomCode,
-		qrData: JSON.stringify({ relay: getRelayUrl(), room: roomCode, key: keyStr }),
+		// omit the relay when it's the default: smaller QR payload scans faster
+		qrData: JSON.stringify({ ...(relay !== DEFAULT_RELAY ? { relay } : {}), room: roomCode, key: keyStr }),
 		destroy: () => {},
 	};
 
-	const relay = getRelayUrl();
 	const wsUrl = `${relay}/room/${roomCode}`;
 	let ws: WebSocket;
 
@@ -148,7 +149,7 @@ export async function createSyncSession(
 
 	ws.onerror = () => {
 		session.status = 'error';
-		session.error = 'WebSocket error — check relay URL';
+		session.error = 'WebSocket error. Check relay URL';
 		onUpdate(session);
 		clearTimeout(timeout);
 	};
@@ -170,16 +171,17 @@ export async function joinSyncSession(
 	qrData: string,
 	onUpdate: (status: SyncStatus, error?: string) => void
 ): Promise<() => void> {
-	let parsed: { relay: string; room: string; key: string };
+	let parsed: { relay?: string; room: string; key: string };
 	try {
 		parsed = JSON.parse(qrData);
 	} catch {
 		onUpdate('error', 'Invalid QR data');
 		return () => {};
 	}
+	const relay = parsed.relay ?? getRelayUrl();
 
 	const key = await importKey(parsed.key);
-	const wsUrl = `${parsed.relay}/room/${parsed.room}`;
+	const wsUrl = `${relay}/room/${parsed.room}`;
 
 	onUpdate('connecting');
 

@@ -5,9 +5,12 @@
 	import IconTrash   from '@tabler/icons-svelte/icons/trash';
 	import IconPlus    from '@tabler/icons-svelte/icons/plus';
 	import IconX       from '@tabler/icons-svelte/icons/x';
+	import IconArrowBarToDown from '@tabler/icons-svelte/icons/arrow-bar-to-down';
+	import IconArrowBarToUp   from '@tabler/icons-svelte/icons/arrow-bar-to-up';
+	import IconTarget   from '@tabler/icons-svelte/icons/target';
 	import { inp, inpSm } from '$lib/styles';
 	import { ISO_COUNTRIES } from '$lib/countries';
-	import { getCountryFlag } from '$lib/utils';
+	import { getCountryFlag, getCountryEmoji } from '$lib/utils';
 
 	let {
 		selectedYear,
@@ -21,12 +24,14 @@
 	let newCode          = $state('');
 	let newName          = $state('');
 	let newColor         = $state('#6366f1');
+	let newEmoji         = $state('');
 	let newSearch        = $state('');
 	let newDropdownOpen  = $state(false);
 
 	let editingCountry   = $state<string | null>(null);
 	let editName         = $state('');
 	let editColor        = $state('');
+	let editEmoji        = $state('');
 	let editSearch       = $state('');
 	let editDropdownOpen = $state(false);
 
@@ -51,7 +56,7 @@
 		editDropdownOpen = false;
 		if (editingCountry) {
 			const oldCode = editingCountry;
-			setCountry(code, name, editColor);
+			setCountry(code, name, editColor, editEmoji.trim() || undefined);
 			if (code !== oldCode) {
 				removeCountry(oldCode);
 				editingCountry = code;
@@ -60,24 +65,34 @@
 		}
 	}
 
+	function uniqueCode(name: string): string {
+		const words = name.replace(/[^a-zA-Z ]/g, '').trim().split(/\s+/).filter(Boolean);
+		const base = (words.length > 1 ? words.map(w => w[0]).join('') : name.slice(0, 3)).toUpperCase() || 'XX';
+		let code = base, i = 2;
+		while (appState.countries[code]) code = `${base}${i++}`;
+		return code;
+	}
+
 	function submitAddCountry() {
-		const code = newCode.trim().toUpperCase();
-		if (!code || !newName.trim()) return;
-		setCountry(code, newName.trim(), newColor);
-		newCode = ''; newName = ''; newColor = '#6366f1'; newSearch = ''; addingCountry = false;
+		const name = newName.trim();
+		if (!name) return;
+		const code = newCode.trim().toUpperCase() || uniqueCode(name);
+		setCountry(code, name, newColor, newEmoji.trim() || undefined);
+		newCode = ''; newName = ''; newColor = '#6366f1'; newEmoji = ''; newSearch = ''; addingCountry = false;
 	}
 
 	function startEdit(code: string) {
 		editingCountry = code;
 		editName  = appState.countries[code].name;
 		editColor = appState.countries[code].color;
+		editEmoji = appState.countries[code].emoji ?? '';
 		const flag = getCountryFlag(code);
 		editSearch = flag ? `${appState.countries[code].name} (${code})` : appState.countries[code].name;
 	}
 
 	function submitEdit() {
 		if (!editingCountry) return;
-		setCountry(editingCountry, editName, editColor);
+		setCountry(editingCountry, editName, editColor, editEmoji.trim() || undefined);
 		editingCountry = null;
 	}
 
@@ -87,12 +102,14 @@
 	}
 
 	function ruleMin(c: string)    { return appState.rules[String(selectedYear)]?.[c]?.min ?? 0; }
-	function ruleMax(c: string)    { const v = appState.rules[String(selectedYear)]?.[c]?.max; return v ?? ''; }
-	function setMin(c: string, v: string) { setRule(String(selectedYear), c, parseInt(v)||0, appState.rules[String(selectedYear)]?.[c]?.max ?? 366); }
-	function setMax(c: string, v: string) { setRule(String(selectedYear), c, appState.rules[String(selectedYear)]?.[c]?.min ?? 0, parseInt(v)||366); }
+	function ruleTarget(c: string) { return appState.rules[String(selectedYear)]?.[c]?.target ?? 0; }
+	function ruleMax(c: string)    { const v = appState.rules[String(selectedYear)]?.[c]?.max; return v !== undefined && v < 366 ? v : 0; }
+	function setMin(c: string, v: string)    { setRule(String(selectedYear), c, { min: parseInt(v) || 0 }); }
+	function setTarget(c: string, v: string) { setRule(String(selectedYear), c, { target: parseInt(v) || 0 }); }
+	function setMax(c: string, v: string)    { setRule(String(selectedYear), c, { max: parseInt(v) || 366 }); }
 </script>
 
-<aside class="flex flex-col overflow-y-auto w-full md:w-60 md:shrink-0 bg-white dark:bg-zinc-900 border-r border-stone-200 dark:border-zinc-800 {activeMobileTab !== 'countries' ? 'max-md:hidden' : ''}">
+<aside class="flex flex-col overflow-y-auto w-full md:w-52 md:shrink-0 bg-white dark:bg-zinc-900 border-r border-stone-200 dark:border-zinc-800 {activeMobileTab !== 'countries' ? 'max-md:hidden' : ''}">
 	<div class="flex items-center gap-2 px-4 pt-5 pb-3">
 		<IconMapPin size={12} class="text-stone-300 dark:text-zinc-700" />
 		<span class="font-brand text-[11px] font-bold tracking-widest uppercase text-stone-400 dark:text-zinc-500">Countries</span>
@@ -128,23 +145,32 @@
 				{/if}
 			</div>
 			<div class="flex items-center gap-2">
-				<input bind:value={editColor} type="color" class="w-8 h-8 rounded-lg border border-stone-200 dark:border-zinc-700 cursor-pointer p-0.5 bg-stone-50 dark:bg-zinc-800 shrink-0" />
+				<input bind:value={editEmoji} class="w-9 h-8 shrink-0 text-center bg-stone-50 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-amber-500/30 focus:border-amber-400 transition-all" placeholder="🏳️" title="Custom emoji (overrides the flag)" />
+			<input bind:value={editColor} type="color" class="w-8 h-8 rounded-lg border border-stone-200 dark:border-zinc-700 cursor-pointer p-0.5 bg-stone-50 dark:bg-zinc-800 shrink-0" />
 				<button onclick={submitEdit} class="flex-1 bg-stone-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl px-3 py-2 text-sm font-semibold hover:opacity-90 transition-opacity">Save</button>
 				<button onclick={() => editingCountry = null} class="w-8 h-8 rounded-xl flex items-center justify-center text-stone-400 hover:bg-stone-100 dark:hover:bg-zinc-800 transition-colors shrink-0"><IconX size={15} /></button>
 			</div>
 		</div>
 		{:else}
 		<div class="flex items-center gap-2.5 px-3 py-3 hover:bg-stone-50 dark:hover:bg-zinc-800/40 transition-colors group" style="border-left: 3px solid {country.color}">
-			{#if getCountryFlag(code)}<span class="text-lg leading-none shrink-0">{getCountryFlag(code)}</span>{/if}
+			{#if getCountryEmoji(code, country)}<span class="text-lg leading-none shrink-0">{getCountryEmoji(code, country)}</span>{/if}
 			<span class="flex-1 text-sm font-medium truncate">{country.name}</span>
 			<button onclick={() => startEdit(code)} class="md:opacity-0 md:group-hover:opacity-100 w-6 h-6 flex items-center justify-center text-stone-300 dark:text-zinc-600 hover:text-blue-500 transition-all rounded-lg"><IconPencil size={12} /></button>
 			<button onclick={() => deleteCountry(code)} class="md:opacity-0 md:group-hover:opacity-100 w-6 h-6 flex items-center justify-center text-stone-300 dark:text-zinc-600 hover:text-red-500 transition-all rounded-lg"><IconTrash size={12} /></button>
 		</div>
-		<div class="flex items-center gap-2 px-4 pb-3 pt-0.5 text-[11px] text-stone-400 dark:text-zinc-600">
-			<span class="w-6 shrink-0 text-stone-300 dark:text-zinc-700">Min</span>
-			<input type="number" min="0" max="366" value={ruleMin(code)} oninput={(e) => setMin(code, (e.target as HTMLInputElement).value)} class={inpSm} />
-			<span class="w-6 ml-1 shrink-0 text-stone-300 dark:text-zinc-700">Max</span>
-			<input type="number" min="0" max="366" value={ruleMax(code)} oninput={(e) => setMax(code, (e.target as HTMLInputElement).value)} class={inpSm} />
+		<div class="grid grid-cols-3 gap-1.5 px-3 pb-3 pt-0.5">
+			<label class="flex flex-col gap-1" title="Required minimum (e.g. 60 days for tax residency)">
+				<span class="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-amber-500/80"><IconArrowBarToDown size={10} /> Min</span>
+				<input type="number" min="0" max="366" placeholder="0" value={ruleMin(code) || ''} oninput={(e) => setMin(code, (e.target as HTMLInputElement).value)} class={inpSm} />
+			</label>
+			<label class="flex flex-col gap-1" title="Goal: days you want to reach (e.g. 184 for extra safety)">
+				<span class="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-emerald-500/80"><IconTarget size={10} /> Goal</span>
+				<input type="number" min="0" max="366" placeholder="0" value={ruleTarget(code) || ''} oninput={(e) => setTarget(code, (e.target as HTMLInputElement).value)} class={inpSm} />
+			</label>
+			<label class="flex flex-col gap-1" title="Hard limit: never exceed (e.g. 183 days)">
+				<span class="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-red-400/80"><IconArrowBarToUp size={10} /> Max</span>
+				<input type="number" min="0" max="366" placeholder="–" value={ruleMax(code) || ''} oninput={(e) => setMax(code, (e.target as HTMLInputElement).value)} class={inpSm} />
+			</label>
 		</div>
 		{/if}
 	</div>
@@ -176,12 +202,18 @@
 				</button>
 				{/each}
 			</div>
+			{#if newDropdownOpen && newSearch.trim() && filteredCountries(newSearch).length === 0}
+			<div class="absolute z-20 top-full left-0 right-0 mt-1 bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-xl shadow-lg px-3 py-2.5 text-[12px] text-stone-500 dark:text-zinc-400">
+				Not in the list. Add <span class="font-semibold text-stone-700 dark:text-zinc-200">{newSearch.trim()}</span> as a custom country with an emoji below.
+			</div>
+			{/if}
 			{/if}
 		</div>
 		<div class="flex items-center gap-2">
+			<input bind:value={newEmoji} class="w-9 h-8 shrink-0 text-center bg-stone-50 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-amber-500/30 focus:border-amber-400 transition-all" placeholder="🏳️" title="Custom emoji (overrides the flag)" />
 			<input bind:value={newColor} type="color" class="w-8 h-8 rounded-lg border border-stone-200 dark:border-zinc-700 cursor-pointer p-0.5 bg-stone-50 dark:bg-zinc-800 shrink-0" />
 			<button onclick={submitAddCountry} class="flex-1 bg-amber-500 hover:bg-amber-600 text-white rounded-xl px-3 py-2 text-sm font-semibold transition-colors">Add</button>
-			<button onclick={() => { addingCountry = false; newSearch = ''; newCode = ''; newName = ''; }} class="w-8 h-8 rounded-xl flex items-center justify-center text-stone-400 hover:bg-stone-100 dark:hover:bg-zinc-800 transition-colors shrink-0"><IconX size={15} /></button>
+			<button onclick={() => { addingCountry = false; newSearch = ''; newCode = ''; newName = ''; newEmoji = ''; }} class="w-8 h-8 rounded-xl flex items-center justify-center text-stone-400 hover:bg-stone-100 dark:hover:bg-zinc-800 transition-colors shrink-0"><IconX size={15} /></button>
 		</div>
 	</div>
 	{:else}
